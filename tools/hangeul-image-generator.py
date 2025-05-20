@@ -55,7 +55,7 @@ def generate_hangul_images(label_file, fonts_dir, output_dir):
                   ((IMAGE_WIDTH - text_w)/2 - x0, (IMAGE_HEIGHT - text_h)/2 - y0),
                   character,
                   fill=255,
-                  font=font
+                  font=font)
               file_string = 'hangeul_{}.jpeg'.format(total_count)
               file_path = os.path.join(image_dir, file_string)
               image.save(file_path, 'JPEG')
