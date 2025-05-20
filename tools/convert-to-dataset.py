@@ -13,7 +13,7 @@ SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
 
 # Default data paths.
 DEFAULT_LABEL_CSV = os.path.join(SCRIPT_PATH, '../image-data/labels-map.csv')
-DEFAULT_LABEL_FILE = os.path.join(SCRIPT_PATH, '../labels/2350-common-hangul.txt')
+DEFAULT_LABEL_FILE = os.path.join(SCRIPT_PATH, '../labels/2350-common-hangeul.txt')
 DEFAULT_OUTPUT_DIR = os.path.join(SCRIPT_PATH, '../tfrecords-output')
 DEFAULT_NUM_SHARDS_TRAIN = 3
 DEFAULT_NUM_SHARDS_TEST = 1
