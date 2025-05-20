@@ -47,7 +47,7 @@ def classify(args):
             graph_def,
             input_map=None,
             return_elements=None,
-            name='hangul-model',
+            name='hangeul-model',
             producer_op_list=None
         )
 
