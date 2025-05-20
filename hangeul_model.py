@@ -18,7 +18,7 @@ TARGET_ACCURACY = 0.999
 
 # Default paths.
 DEFAULT_LABEL_FILE = os.path.join(SCRIPT_PATH,
-                                  './labels/2350-common-hangul.txt')
+                                  './labels/2350-common-hangeul.txt')
 DEFAULT_TFRECORDS_DIR = os.path.join(SCRIPT_PATH, 'tfrecords-output')
 DEFAULT_OUTPUT_DIR = os.path.join(SCRIPT_PATH, 'saved-model')
 
