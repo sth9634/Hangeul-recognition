@@ -8,8 +8,13 @@ import tensorflow as tf
 from tensorflow.python.tools import freeze_graph
 from tensorflow.python.tools import optimize_for_inference_lib
 
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
 
 SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
+
+# Target Accurancy
+TARGET_ACCURACY = 0.999
 
 # Default paths.
 DEFAULT_LABEL_FILE = os.path.join(SCRIPT_PATH,
@@ -22,18 +27,18 @@ IMAGE_WIDTH = 64
 IMAGE_HEIGHT = 64
 
 DEFAULT_NUM_EPOCHS = 15
-BATCH_SIZE = 100
+BATCH_SIZE = 128
 
 # This will be determined by the number of entries in the given label file.
 num_classes = 2350
 
 
 def _parse_function(example):
-    features = tf.parse_single_example(
+    features = tf.io.parse_single_example(
         example,
         features={
-            'image/class/label': tf.FixedLenFeature([], tf.int64),
-            'image/encoded': tf.FixedLenFeature([], dtype=tf.string,
+            'image/class/label': tf.io.FixedLenFeature([], tf.int64),
+            'image/encoded': tf.io.FixedLenFeature([], dtype=tf.string,
                                                 default_value='')
         })
     label = features['image/class/label']
@@ -119,15 +124,15 @@ def main(label_file, tfrecords_dir, model_output_dir, num_train_epochs):
     print('Processing data...')
 
     tf_record_pattern = os.path.join(tfrecords_dir, '%s-*' % 'train')
-    train_data_files = tf.gfile.Glob(tf_record_pattern)
+    train_data_files = tf.io.gfile.glob(tf_record_pattern)
 
     tf_record_pattern = os.path.join(tfrecords_dir, '%s-*' % 'test')
-    test_data_files = tf.gfile.Glob(tf_record_pattern)
+    test_data_files = tf.io.gfile.glob(tf_record_pattern)
 
     # Create training dataset input pipeline.
     train_dataset = tf.data.TFRecordDataset(train_data_files) \
         .map(_parse_function) \
-        .shuffle(1000) \
+        .shuffle(100000) \
         .repeat(num_train_epochs) \
         .batch(BATCH_SIZE) \
         .prefetch(1)
@@ -135,11 +140,10 @@ def main(label_file, tfrecords_dir, model_output_dir, num_train_epochs):
     # Create the model!
 
     # Placeholder to feed in image data.
-    x = tf.placeholder(tf.float32, [None, IMAGE_WIDTH*IMAGE_HEIGHT],
-                       name=input_node_name)
+    x = tf.placeholder(tf.float32, shape=[None, IMAGE_WIDTH*IMAGE_HEIGHT], name=input_node_name)
     # Placeholder to feed in label data. Labels are represented as one_hot
     # vectors.
-    y_ = tf.placeholder(tf.float32, [None, num_classes])
+    y_ = y_ = tf.placeholder(tf.float32, shape=[None, num_classes], name='labels')
 
     # Reshape the image back into two dimensions so we can perform convolution.
     x_image = tf.reshape(x, [-1, IMAGE_WIDTH, IMAGE_HEIGHT, 1])
@@ -205,7 +209,7 @@ def main(label_file, tfrecords_dir, model_output_dir, num_train_epochs):
     # rate of 0.0001 with AdamOptimizer. This utilizes someting
     # called the Adam algorithm, and utilizes adaptive learning rates and
     # momentum to get past saddle points.
-    train_step = tf.train.AdamOptimizer(0.0001).minimize(cross_entropy)
+    train_step = tf.train.AdamOptimizer(0.00005).minimize(cross_entropy)
 
     # Define accuracy.
     correct_prediction = tf.equal(tf.argmax(y, 1), tf.argmax(y_, 1))
@@ -244,8 +248,14 @@ def main(label_file, tfrecords_dir, model_output_dir, num_train_epochs):
                         feed_dict={x: train_images, y_: train_labels,
                                    keep_prob: 1.0}
                     )
-                    print("Step %d, Training Accuracy %g" %
+                    print("Step %d, Training Accuracy %.6f" %
                           (step, float(train_accuracy)))
+
+                # Target Accurancy
+                if train_accuracy >= TARGET_ACCURACY:
+                    print("Target accuracy reached – stopping training.")
+                    break
+                # until here
 
                 # Every 10,000 iterations, we save a checkpoint of the model.
                 if step % 10000 == 0:
