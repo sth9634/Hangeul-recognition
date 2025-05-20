@@ -13,16 +13,15 @@ tf.disable_v2_behavior()
 
 SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
 
-# Target Accurancy
-TARGET_ACCURACY = 0.999
+# Target number of get 100% answer
+TARGET_ACCURATE = 3
 
 # Default paths.
-DEFAULT_LABEL_FILE = os.path.join(SCRIPT_PATH,
-                                  './labels/2350-common-hangeul.txt')
+DEFAULT_LABEL_FILE = os.path.join(SCRIPT_PATH, './labels/2350-common-hangeul.txt')
 DEFAULT_TFRECORDS_DIR = os.path.join(SCRIPT_PATH, 'tfrecords-output')
 DEFAULT_OUTPUT_DIR = os.path.join(SCRIPT_PATH, 'saved-model')
 
-MODEL_NAME = 'hangul_tensorflow'
+MODEL_NAME = 'hangeul_tensorflow'
 IMAGE_WIDTH = 64
 IMAGE_HEIGHT = 64
 
@@ -232,6 +231,7 @@ def main(label_file, tfrecords_dir, model_output_dir, num_train_epochs):
             iterator = train_dataset.make_one_shot_iterator()
             batch = iterator.get_next()
             step = 0
+            correct = 0
 
             while True:
 
@@ -248,13 +248,14 @@ def main(label_file, tfrecords_dir, model_output_dir, num_train_epochs):
                         feed_dict={x: train_images, y_: train_labels,
                                    keep_prob: 1.0}
                     )
-                    print("Step %d, Training Accuracy %.6f" %
+                    print("Step %d, Training Accuracy %.5f" %
                           (step, float(train_accuracy)))
 
                 # Target Accurancy
-                if train_accuracy >= TARGET_ACCURACY:
-                    print("Target accuracy reached – stopping training.")
-                    break
+                if train_accuracy == 1:
+                    correct += 1
+                    if correct >= TARGET_ACCURATE:
+                        break
                 # until here
 
                 # Every 10,000 iterations, we save a checkpoint of the model.
