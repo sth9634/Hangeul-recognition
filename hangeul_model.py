@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import argparse
 import io
 import os
@@ -13,9 +11,6 @@ tf.disable_v2_behavior()
 
 SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
 
-# Target number of get 100% answer
-TARGET_ACCURATE = 3
-
 # Default paths.
 DEFAULT_LABEL_FILE = os.path.join(SCRIPT_PATH, './labels/2350-common-hangeul.txt')
 DEFAULT_TFRECORDS_DIR = os.path.join(SCRIPT_PATH, 'tfrecords-output')
@@ -24,9 +19,6 @@ DEFAULT_OUTPUT_DIR = os.path.join(SCRIPT_PATH, 'saved-model')
 MODEL_NAME = 'hangeul_tensorflow'
 IMAGE_WIDTH = 64
 IMAGE_HEIGHT = 64
-
-DEFAULT_NUM_EPOCHS = 15
-BATCH_SIZE = 128
 
 # This will be determined by the number of entries in the given label file.
 num_classes = 2350
@@ -99,7 +91,7 @@ def bias_variable(shape):
     return tf.Variable(initial, name='bias')
 
 
-def main(label_file, tfrecords_dir, model_output_dir, num_train_epochs):
+def main(label_file, tfrecords_dir, model_output_dir, num_train_epochs, num_target_accurate, batch_size):
     """Perform graph definition and model training.
 
     Here we will first create our input pipeline for reading in TFRecords
@@ -133,7 +125,7 @@ def main(label_file, tfrecords_dir, model_output_dir, num_train_epochs):
         .map(_parse_function) \
         .shuffle(100000) \
         .repeat(num_train_epochs) \
-        .batch(BATCH_SIZE) \
+        .batch(batch_size) \
         .prefetch(1)
 
     # Create the model!
@@ -242,7 +234,7 @@ def main(label_file, tfrecords_dir, model_output_dir, num_train_epochs):
                 sess.run(train_step, feed_dict={x: train_images,
                                                 y_: train_labels,
                                                 keep_prob: 0.5})
-                if step % 100 == 0:
+                if step % 500 == 0:
                     train_accuracy = sess.run(
                         accuracy,
                         feed_dict={x: train_images, y_: train_labels,
@@ -254,7 +246,8 @@ def main(label_file, tfrecords_dir, model_output_dir, num_train_epochs):
                 # Target Accurancy
                 if train_accuracy == 1:
                     correct += 1
-                    if correct >= TARGET_ACCURATE:
+                    print(f"All correct answers on Step {step}")
+                    if correct >= num_target_accurate:
                         break
                 # until here
 
@@ -267,20 +260,15 @@ def main(label_file, tfrecords_dir, model_output_dir, num_train_epochs):
         except tf.errors.OutOfRangeError:
             pass
 
-        # Save a checkpoint after training has completed.
         saver.save(sess, checkpoint_file)
-
-        # See how model did by running the testing set through the model.
         print('Testing model...')
 
         # Create testing dataset input pipeline.
         test_dataset = tf.data.TFRecordDataset(test_data_files) \
             .map(_parse_function) \
-            .batch(BATCH_SIZE) \
+            .batch(batch_size) \
             .prefetch(1)
 
-        # Define a different tensor operation for summing the correct
-        # predictions.
         accuracy2 = tf.reduce_sum(correct_prediction)
         total_correct_preds = 0
         total_preds = 0
@@ -302,8 +290,7 @@ def main(label_file, tfrecords_dir, model_output_dir, num_train_epochs):
         test_accuracy = total_correct_preds/total_preds
         print("Testing Accuracy {}".format(test_accuracy))
 
-        export_model(model_output_dir, [input_node_name, keep_prob_node_name],
-                     output_node_name)
+        export_model(model_output_dir, [input_node_name, keep_prob_node_name], output_node_name)
 
         sess.close()
 
@@ -319,11 +306,17 @@ if __name__ == '__main__':
     parser.add_argument('--output-dir', type=str, dest='output_dir',
                         default=DEFAULT_OUTPUT_DIR,
                         help='Output directory to store saved model files.')
-    parser.add_argument('--num-train-epochs', type=int,
+    parser.add_argument('--epochs', type=int,
                         dest='num_train_epochs',
-                        default=DEFAULT_NUM_EPOCHS,
-                        help='Number of times to iterate over all of the '
-                             'training data.')
+                        default=15,
+                        help='Number of times to iterate over all of the training data.')
+    parser.add_argument('--iteration', type=int,
+                        dest='num_target_accurate',
+                        default=3,
+                        help='Number of times for getting all corect 128 answers.')
+    parser.add_argument('--batch', type=int,
+                        dest='batch_size',
+                        default=128,
+                        help='Number of batches')
     args = parser.parse_args()
-    main(args.label_file, args.tfrecords_dir,
-         args.output_dir, args.num_train_epochs)
+    main(args.label_file, args.tfrecords_dir, args.output_dir, args.num_train_epochs, args.num_target_accurate, args.batch_size)
