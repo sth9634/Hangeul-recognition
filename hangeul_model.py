@@ -234,7 +234,7 @@ def main(label_file, tfrecords_dir, model_output_dir, num_train_epochs, num_targ
                                                 keep_prob: 0.5})
                 if step % 500 == 0:
                     train_accuracy = sess.run(accuracy, feed_dict={x: train_images, y_: train_labels, keep_prob: 1.0})
-                    print(f"Step {step}, Training Accuracy : {train_accuracy:.5f}"
+                    print(f"Step {step}, Training Accuracy : {train_accuracy:.5f}")
 
                 if train_accuracy == 1:
                     correct += 1
