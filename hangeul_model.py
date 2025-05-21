@@ -227,31 +227,21 @@ def main(label_file, tfrecords_dir, model_output_dir, num_train_epochs, num_targ
 
             while True:
 
-                # Get a batch of images and their corresponding labels.
                 train_images, train_labels = sess.run(batch)
 
-                # Perform the training step, feeding in the batches.
                 sess.run(train_step, feed_dict={x: train_images,
                                                 y_: train_labels,
                                                 keep_prob: 0.5})
                 if step % 500 == 0:
-                    train_accuracy = sess.run(
-                        accuracy,
-                        feed_dict={x: train_images, y_: train_labels,
-                                   keep_prob: 1.0}
-                    )
-                    print("Step %d, Training Accuracy %.5f" %
-                          (step, float(train_accuracy)))
+                    train_accuracy = sess.run(accuracy, feed_dict={x: train_images, y_: train_labels, keep_prob: 1.0})
+                    print(f"Step {step}, Training Accuracy : {train_accuracy:.5f}"
 
-                # Target Accurancy
                 if train_accuracy == 1:
                     correct += 1
-                    print(f"All correct answers on Step {step}")
                     if correct >= num_target_accurate:
+                        print(f"Finished training the model on Step {step}")
                         break
-                # until here
 
-                # Every 10,000 iterations, we save a checkpoint of the model.
                 if step % 10000 == 0:
                     saver.save(sess, checkpoint_file, global_step=step)
 
@@ -288,7 +278,7 @@ def main(label_file, tfrecords_dir, model_output_dir, num_train_epochs, num_targ
             pass
 
         test_accuracy = total_correct_preds/total_preds
-        print("Testing Accuracy {}".format(test_accuracy))
+        print(f"Testing Accuracy {test_accuracy:.5f}")
 
         export_model(model_output_dir, [input_node_name, keep_prob_node_name], output_node_name)
 
