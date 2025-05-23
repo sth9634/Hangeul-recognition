@@ -20,7 +20,6 @@ MODEL_NAME = 'hangeul_tensorflow'
 IMAGE_WIDTH = 64
 IMAGE_HEIGHT = 64
 
-# This will be determined by the number of entries in the given label file.
 num_classes = 2350
 
 
@@ -35,7 +34,6 @@ def _parse_function(example):
     label = features['image/class/label']
     image_encoded = features['image/encoded']
 
-    # Decode the JPEG.
     image = tf.image.decode_jpeg(image_encoded, channels=1)
     image = tf.image.convert_image_dtype(image, dtype=tf.float32)
     image = tf.reshape(image, [IMAGE_WIDTH*IMAGE_HEIGHT])
