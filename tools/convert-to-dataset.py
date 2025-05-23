@@ -11,7 +11,6 @@ import tensorflow as tf
 
 SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
 
-# Default data paths.
 DEFAULT_LABEL_CSV = os.path.join(SCRIPT_PATH, '../image-data/labels-map.csv')
 DEFAULT_LABEL_FILE = os.path.join(SCRIPT_PATH, '../labels/2350-common-hangeul.txt')
 DEFAULT_OUTPUT_DIR = os.path.join(SCRIPT_PATH, '../tfrecords-output')
@@ -28,10 +27,7 @@ def _bytes_feature(value):
 
 
 class TFRecordsConverter(object):
-    """Class that handles converting images to TFRecords."""
-
-    def __init__(self, labels_csv, label_file, output_dir,
-                 num_shards_train, num_shards_test):
+    def __init__(self, labels_csv, label_file, output_dir, num_shards_train, num_shards_test):
 
         self.output_dir = output_dir
         self.num_shards_train = num_shards_train
